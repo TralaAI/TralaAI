@@ -1,0 +1,27 @@
+name: 📊 Update Tech-Graph
+
+on:
+  schedule:
+    - cron: '0 3 * * *'    # nightly at 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Generate tech-stack graph
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/repo \
+            specfy/stack-analyser:latest \
+            --output /repo/tech-graph.svg \
+            --format graph
+
+      - name: Commit & push chart
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore: 📊 update tech-stack graph"
+          file_pattern: tech-graph.svg
