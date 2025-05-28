@@ -1,4 +1,5 @@
-name: 📊 Update Tech-Graph
+# File: .github/workflows/tech-graph.yml
+name: 📈 Tech-Graph
 
 on:
   schedule:
@@ -6,22 +7,52 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-commit:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - repo: TralaAI/TralaAI
+            path: root
+          - repo: TralaAI/blazor-ui
+            path: blazor-ui
+          - repo: TralaAI/core-api
+            path: core-api
+          - repo: TralaAI/fastapi
+            path: fastapi
+          - repo: TralaAI/model-trainer
+            path: model-trainer
+
     steps:
-      - name: Check out code
+      - name: Check out ${{ matrix.repo }}
         uses: actions/checkout@v3
+        with:
+          repository: ${{ matrix.repo }}
+          path: ${{ matrix.path }}
 
-      - name: Generate tech-stack graph
+      # Only run install & graph generation in the 'root' job
+      - name: Install tools
+        if: matrix.path == 'root'
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/repo \
-            specfy/stack-analyser:latest \
-            --output /repo/tech-graph.svg \
-            --format graph
+          npm install -g dependency-cruiser graphviz-cli
 
-      - name: Commit & push chart
+      - name: Generate combined DOT
+        if: matrix.path == 'root'
+        run: |
+          depcruise \
+            root/src \
+            blazor-ui/src \
+            core-api/src \
+            --output-type dot \
+            > tech-graph.dot
+
+      - name: Render SVG
+        if: matrix.path == 'root'
+        run: dot -Tsvg tech-graph.dot -o tech-graph.svg
+
+      - name: Commit & push tech-graph.svg
+        if: matrix.path == 'root'
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "chore: 📊 update tech-stack graph"
+          commit_message: "chore: 📈 update org-wide tech graph"
           file_pattern: tech-graph.svg
