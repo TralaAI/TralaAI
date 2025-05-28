@@ -1,5 +1,5 @@
 # File: .github/workflows/tech-graph.yml
-name: 📈 Tech-Graph
+name: 📈 Generate Org-Wide Tech-Graph
 
 on:
   schedule:
@@ -30,19 +30,22 @@ jobs:
           repository: ${{ matrix.repo }}
           path: ${{ matrix.path }}
 
-      # Only run install & graph generation in the 'root' job
-      - name: Install tools
+      - name: Install Dependency-Cruiser & Graphviz
         if: matrix.path == 'root'
         run: |
-          npm install -g dependency-cruiser graphviz-cli
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+          npm install -g dependency-cruiser --unsafe-perm
 
       - name: Generate combined DOT
         if: matrix.path == 'root'
         run: |
           depcruise \
-            root/src \
-            blazor-ui/src \
-            core-api/src \
+            root \
+            blazor-ui \
+            core-api \
+            fastapi \
+            model-trainer \
             --output-type dot \
             > tech-graph.dot
 
