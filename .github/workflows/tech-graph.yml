@@ -55,9 +55,14 @@ jobs:
         run: |
           python3 scripts/scan-tech.py > tech-graph.mmd
 
-      # 5) Render the Mermaid file to SVG
+      # 5) Render the Mermaid file to SVG (disable sandbox for Puppeteer)
       - name: Render SVG
-        run: npx mmdc -i tech-graph.mmd -o tech-graph.svg
+        run: |
+          npx mmdc \
+            -i tech-graph.mmd \
+            -o tech-graph.svg \
+            --no-sandbox \
+            --puppeteerConfig '{"args":["--no-sandbox","--disable-setuid-sandbox"]}'
 
       # 6) Commit & push the result
       - name: Commit & push tech-graph.svg
