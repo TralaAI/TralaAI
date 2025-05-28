@@ -11,50 +11,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Checkout the main TralaAI/TralaAI repo into ./root
+      # 1) Checkout main repo into the workspace (default)
       - name: Check out TralaAI/TralaAI
         uses: actions/checkout@v3
-        with:
-          repository: TralaAI/TralaAI
-          path: root
 
-      # 2) Checkout each of the other org repos into its own folder
-      - name: Check out TralaAI/blazor-ui
+      # 2) Checkout other org repos into subfolders
+      - name: Check out blazor-ui
         uses: actions/checkout@v3
         with:
           repository: TralaAI/blazor-ui
           path: blazor-ui
 
-      - name: Check out TralaAI/core-api
+      - name: Check out core-api
         uses: actions/checkout@v3
         with:
           repository: TralaAI/core-api
           path: core-api
 
-      - name: Check out TralaAI/fastapi
+      - name: Check out fastapi
         uses: actions/checkout@v3
         with:
           repository: TralaAI/fastapi
           path: fastapi
 
-      - name: Check out TralaAI/model-trainer
+      - name: Check out model-trainer
         uses: actions/checkout@v3
         with:
           repository: TralaAI/model-trainer
           path: model-trainer
 
-      # 3) Install Graphviz and dependency-cruiser
+      # 3) Install Graphviz & dependency-cruiser
       - name: Install Graphviz & Dependency-Cruiser
         run: |
           sudo apt-get update
           sudo apt-get install -y graphviz
           npm install -g dependency-cruiser --unsafe-perm
 
-      # 4) Generate the combined .dot
+      # 4) Generate the combined .dot (scan the workspace root plus subfolders)
       - name: Generate combined DOT
         run: |
           depcruise \
-            root \
+            . \
             blazor-ui \
             core-api \
             fastapi \
@@ -65,12 +62,11 @@ jobs:
 
       # 5) Render the SVG
       - name: Render SVG
-        run: |
-          dot -Tsvg tech-graph.dot -o tech-graph.svg
+        run: dot -Tsvg tech-graph.dot -o tech-graph.svg
 
-      # 6) Commit & push it back
+      # 6) Commit & push tech-graph.svg back into TralaAI/TralaAI
       - name: Commit & push tech-graph.svg
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "chore: 📈 update tech graph"
+          commit_message: "chore: 📈 update org-wide tech graph"
           file_pattern: tech-graph.svg
