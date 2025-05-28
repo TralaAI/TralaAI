@@ -1,5 +1,5 @@
 # File: .github/workflows/tech-graph.yml
-name: 📈 Generate Org-Wide Tech-Graph
+name: 📈 Tech-Graph
 
 on:
   schedule:
@@ -46,6 +46,7 @@ jobs:
             core-api \
             fastapi \
             model-trainer \
+            --no-config \
             --output-type dot \
             > tech-graph.dot
 
