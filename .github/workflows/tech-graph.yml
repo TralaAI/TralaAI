@@ -9,36 +9,49 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - repo: TralaAI/TralaAI
-            path: root
-          - repo: TralaAI/blazor-ui
-            path: blazor-ui
-          - repo: TralaAI/core-api
-            path: core-api
-          - repo: TralaAI/fastapi
-            path: fastapi
-          - repo: TralaAI/model-trainer
-            path: model-trainer
 
     steps:
-      - name: Check out ${{ matrix.repo }}
+      # 1) Checkout the main TralaAI/TralaAI repo into ./root
+      - name: Check out TralaAI/TralaAI
         uses: actions/checkout@v3
         with:
-          repository: ${{ matrix.repo }}
-          path: ${{ matrix.path }}
+          repository: TralaAI/TralaAI
+          path: root
 
-      - name: Install Dependency-Cruiser & Graphviz
-        if: matrix.path == 'root'
+      # 2) Checkout each of the other org repos into its own folder
+      - name: Check out TralaAI/blazor-ui
+        uses: actions/checkout@v3
+        with:
+          repository: TralaAI/blazor-ui
+          path: blazor-ui
+
+      - name: Check out TralaAI/core-api
+        uses: actions/checkout@v3
+        with:
+          repository: TralaAI/core-api
+          path: core-api
+
+      - name: Check out TralaAI/fastapi
+        uses: actions/checkout@v3
+        with:
+          repository: TralaAI/fastapi
+          path: fastapi
+
+      - name: Check out TralaAI/model-trainer
+        uses: actions/checkout@v3
+        with:
+          repository: TralaAI/model-trainer
+          path: model-trainer
+
+      # 3) Install Graphviz and dependency-cruiser
+      - name: Install Graphviz & Dependency-Cruiser
         run: |
           sudo apt-get update
           sudo apt-get install -y graphviz
           npm install -g dependency-cruiser --unsafe-perm
 
+      # 4) Generate the combined .dot
       - name: Generate combined DOT
-        if: matrix.path == 'root'
         run: |
           depcruise \
             root \
@@ -50,13 +63,14 @@ jobs:
             --output-type dot \
             > tech-graph.dot
 
+      # 5) Render the SVG
       - name: Render SVG
-        if: matrix.path == 'root'
-        run: dot -Tsvg tech-graph.dot -o tech-graph.svg
+        run: |
+          dot -Tsvg tech-graph.dot -o tech-graph.svg
 
+      # 6) Commit & push it back
       - name: Commit & push tech-graph.svg
-        if: matrix.path == 'root'
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "chore: 📈 update org-wide tech graph"
+          commit_message: "chore: 📈 update tech graph"
           file_pattern: tech-graph.svg
